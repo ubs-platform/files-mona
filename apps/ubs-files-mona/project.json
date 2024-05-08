@@ -1,0 +1,24 @@
+{
+  "name": "ubs-files-mona",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/ubs-files-mona/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "ubs-files-mona:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "ubs-files-mona:build:development"
+        },
+        "production": {
+          "buildTarget": "ubs-files-mona:build:production"
+        }
+      }
+    }
+  }
+}
