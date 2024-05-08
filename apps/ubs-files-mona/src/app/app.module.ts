@@ -16,7 +16,7 @@ import { FileService } from './service/file.service';
         process.env.NX_MONGO_PASSWORD
       }@${process.env.NX_MONGO_URL || 'localhost'}/?authMechanism=DEFAULT`,
       {
-        dbName: process.env.NX_MONGO_DBNAME || 'ubs_users',
+        dbName: process.env.NX_MONGO_DBNAME || 'ubs_files',
       }
     ),
     ServeStaticModule.forRoot({
