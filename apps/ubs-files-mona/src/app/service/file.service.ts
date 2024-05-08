@@ -11,7 +11,7 @@ export class FileService {
   constructor(@InjectModel(FileModel.name) private fileModel: Model<FileDoc>) {}
 
   async removeByName(name: string): Promise<void> {
-    this.fileModel.findOneAndRemove(
+    this.fileModel.findOneAndDelete(
       {
         name: name,
       },

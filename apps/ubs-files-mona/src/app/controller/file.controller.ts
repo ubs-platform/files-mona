@@ -41,29 +41,13 @@ import {
 @Controller('file')
 export class ImageFileController {
   clients: { [key: string]: ClientProxy | ClientKafka | ClientRMQ } = {};
-  // alreadyResponseRegistered: string[] = [];
-  constructor(
-    private fservice: FileService,
-    @Inject('META_CHECK_CLIENT') private kafka: ClientProxy //
-  ) {}
-
-  // @MessagePattern('file-upload-start')
-  // async uploadFileStart(file: FileRequest): Promise<number> {
-  //   console.debug('İmage upload msg has been received');
-  //   return await this.fservice.uploadFile(file, 'start');
-  // }
-
-  // @MessagePattern('file-upload-continue')
-  // async uploadFileContinue(file: FileRequest): Promise<number> {
-  //   console.debug('İmage upload msg has been received');
-  //   return await this.fservice.uploadFile(file, 'continue');
-  // }
+  constructor(private fservice: FileService) {}
 
   @Put('/:type/:objectId')
   @UseInterceptors(FileInterceptor('file'))
   @UseGuards(JwtAuthGuard)
   async uploadFile(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: any,
     @Param() params: { type: string; objectId?: string },
     @CurrentUser() user: UserDTO
   ) {
@@ -74,7 +58,7 @@ export class ImageFileController {
   @UseInterceptors(FileInterceptor('file'))
   @UseGuards(JwtAuthGuard)
   async uploadFileOnlyType(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: any,
     @Param() params: { type: string },
     @CurrentUser() user: UserDTO
   ) {
@@ -82,7 +66,7 @@ export class ImageFileController {
   }
 
   async uploadFile1(
-    file: Express.Multer.File,
+    file: any,
     params: { type: string; objectId?: string },
     user: UserDTO
   ) {

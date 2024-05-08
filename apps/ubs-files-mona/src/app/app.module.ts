@@ -12,9 +12,11 @@ import { FileService } from './service/file.service';
 @Module({
   imports: [
     MongooseModule.forRoot(
-      `mongodb://admin:admin@${'localhost'}/?authMechanism=DEFAULT`,
+      `mongodb://${process.env.NX_MONGO_USERNAME}:${
+        process.env.NX_MONGO_PASSWORD
+      }@${process.env.NX_MONGO_URL || 'localhost'}/?authMechanism=DEFAULT`,
       {
-        dbName: 'ubs_files',
+        dbName: process.env.NX_MONGO_DBNAME || 'ubs_users',
       }
     ),
     ServeStaticModule.forRoot({
