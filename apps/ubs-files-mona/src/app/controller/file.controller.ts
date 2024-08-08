@@ -38,6 +38,7 @@ import {
   JwtAuthGuard,
   CurrentUser,
 } from '@ubs-platform/users-mona-microservice-helper';
+import { FileCategoryResponse } from '../dto/file-category-response';
 @Controller('file')
 export class ImageFileController {
   clients: { [key: string]: ClientProxy | ClientKafka | ClientRMQ } = {};
@@ -70,7 +71,38 @@ export class ImageFileController {
     params: { type: string; objectId?: string },
     user: UserDTO
   ) {
-    const topic = `file-upload-${params.type}`;
+    const topic = this.generateTopic(params);
+    const client = this.generateTopicClient(topic);
+
+    const categoryResponse: FileCategoryResponse = await lastValueFrom(
+      client.send(topic, { userId: user.id, objectId: params.objectId })
+    );
+    const maxLimitBytes = categoryResponse.maxLimitBytes | 1000000;
+    if (categoryResponse.category && categoryResponse.name) {
+      console.info(file);
+      if (maxLimitBytes < file.size) {
+        throw new BadRequestException('file-limit-exceed');
+      }
+      await this.fservice.uploadFile(
+        {
+          category: categoryResponse.category,
+          name: categoryResponse.name,
+          fileBytes: [...file.buffer],
+          mimeType: file.mimetype,
+          size: file.size,
+        },
+        'start'
+      );
+      return {
+        category: categoryResponse.category,
+        name: categoryResponse.name,
+      };
+    } else {
+      throw categoryResponse.error;
+    }
+  }
+
+  private generateTopicClient(topic: string) {
     if (this.clients[topic] == null) {
       this.clients[topic] = ClientProxyFactory.create({
         ...getMicroserviceConnection(''),
@@ -79,31 +111,11 @@ export class ImageFileController {
 
       console.debug(this.clients);
     }
-    const client = this.clients[topic];
+    return this.clients[topic];
+  }
 
-    const {
-      category,
-      name,
-      error,
-    }: { category?: string; name?: string; error?: string } =
-      await lastValueFrom(
-        client.send(topic, { userId: user.id, objectId: params.objectId })
-      );
-    if (category && name) {
-      await this.fservice.uploadFile(
-        {
-          category,
-          name,
-          fileBytes: [...file.buffer],
-          mimeType: file.mimetype,
-          size: file.size,
-        },
-        'start'
-      );
-      return { category, name };
-    } else {
-      throw error;
-    }
+  private generateTopic(params: { type: string; objectId?: string }) {
+    return `file-upload-${params.type}`;
   }
 
   @Get('/:category/:name')
