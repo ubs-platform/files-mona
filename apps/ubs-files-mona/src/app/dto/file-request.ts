@@ -1,5 +1,5 @@
 export interface FileRequest {
-  fileBytes: number[];
+  fileBytesBuff: Buffer;
   mimeType: string;
   size: number;
   name: string;

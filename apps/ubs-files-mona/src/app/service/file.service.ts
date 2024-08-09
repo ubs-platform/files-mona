@@ -5,7 +5,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { UserDTO } from '@ubs-platform/users-common';
 import { FileMeta } from '../dto/file-meta';
 import { FileRequest } from '../dto/file-request';
-
+import sharp from 'sharp';
+import Jimp from 'jimp';
+import * as WebpConverter from 'webp-converter';
 @Injectable()
 export class FileService {
   constructor(@InjectModel(FileModel.name) private fileModel: Model<FileDoc>) {}
@@ -48,6 +50,7 @@ export class FileService {
     ft: FileRequest,
     mode: 'start' | 'continue'
   ): Promise<number> {
+    ft = await this.applyOptimisations(ft);
     // if there is existing
     const exist = await this.findByNamePure(ft.category, ft.name);
     let f = exist || new this.fileModel();
@@ -56,8 +59,8 @@ export class FileService {
 
     const bytesNew =
       mode == 'start'
-        ? Buffer.from(ft.fileBytes)
-        : Buffer.from([...f.file, ...ft.fileBytes]);
+        ? ft.fileBytesBuff
+        : Buffer.from([...f.file, ...ft.fileBytesBuff]);
     const remaining = size - bytesNew.length;
 
     try {
@@ -71,5 +74,29 @@ export class FileService {
     } catch (error) {
       console.error(error);
     }
+  }
+  async applyOptimisations(ft: FileRequest): Promise<FileRequest> {
+    if (
+      ft.mimeType == 'image/jpeg' ||
+      ft.mimeType == 'image/png' ||
+      ft.mimeType == 'image/gif' ||
+      ft.mimeType == 'image/apng' ||
+      ft.mimeType == 'image/avif'
+    ) {
+      // const img = await Jimp.read(ft.fileBytes as any);
+      // const webp = img.web
+      // const ext = ft.mimeType.
+      // let [, extension] = ft.mimeType.split('/');
+      // if (extension == 'jpeg') extension = 'jpg';
+      // const newBUff = await WebpConverter.buffer2webpbuffer(
+      //   ft.fileBytes,
+      //   extension,
+      //   '-q 80'
+      // );
+      const buff = await sharp(ft.fileBytesBuff, {}).webp({}).toBuffer();
+      ft.fileBytesBuff = buff;
+      ft.mimeType = 'image/webp';
+    }
+    return ft;
   }
 }

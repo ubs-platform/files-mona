@@ -87,7 +87,8 @@ export class ImageFileController {
         {
           category: categoryResponse.category,
           name: categoryResponse.name,
-          fileBytes: [...file.buffer],
+          fileBytesBuff: file.buffer,
+          // fileBytes: [...file.buffer],
           mimeType: file.mimetype,
           size: file.size,
         },
