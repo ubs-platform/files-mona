@@ -42,6 +42,27 @@ import { FileCategoryResponse } from '../dto/file-category-response';
 @Controller('file')
 export class ImageFileController {
   clients: { [key: string]: ClientProxy | ClientKafka | ClientRMQ } = {};
+  potentialMalicousMimeTypes = [
+    'application/x-msdownload',
+    // 'application/octet-stream',
+    'application/x-shellscript',
+    'text/x-shellscript',
+  ];
+  potentialMalicousExtensions = [
+    'exe',
+    'apk',
+    'sh',
+    'bat',
+    'ps1',
+    'js',
+    'bash',
+    'zsh',
+    'appimage',
+    'pisi',
+    'deb',
+    'yum',
+    'rpm',
+  ];
   constructor(private fservice: FileService) {}
 
   @Put('/:type/:objectId')
@@ -52,6 +73,7 @@ export class ImageFileController {
     @Param() params: { type: string; objectId?: string },
     @CurrentUser() user: UserDTO
   ) {
+    this.checkMimeTypeAndExtension(file);
     return await this.uploadFile1(file, params, user);
   }
 
@@ -63,6 +85,7 @@ export class ImageFileController {
     @Param() params: { type: string },
     @CurrentUser() user: UserDTO
   ) {
+    this.checkMimeTypeAndExtension(file);
     return await this.uploadFile1(file, params, user);
   }
 
@@ -129,6 +152,25 @@ export class ImageFileController {
       return response.status(200).contentType(fil.mimetype).send(fil.file);
     } else {
       return response.redirect('/assets/not-found.image.png');
+    }
+  }
+
+  checkMimeTypeAndExtension(file) {
+    const mimetype = file.mimetype;
+    console.info(file);
+    if (this.potentialMalicousMimeTypes.includes(mimetype)) {
+      throw new BadRequestException('potential-malicous-file');
+    }
+
+    for (
+      let index = 0;
+      index < this.potentialMalicousExtensions.length;
+      index++
+    ) {
+      const ext = this.potentialMalicousExtensions[index];
+      if (file.originalname.endsWith('.' + ext)) {
+        throw new BadRequestException('potential-malicous-file');
+      }
     }
   }
 }
