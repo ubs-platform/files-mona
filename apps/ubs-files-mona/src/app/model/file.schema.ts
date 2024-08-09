@@ -33,6 +33,12 @@ export class FileModel {
 
   @Prop(String)
   userId: String;
+
+  @Prop({ type: Boolean, default: false })
+  volatile: Boolean;
+
+  @Prop({ type: Date, default: new Date(Date.now() + 3600000) })
+  expireAt: Date;
 }
 
 export type FileDoc = FileModel & Document;

@@ -3,5 +3,6 @@ export interface FileCategoryResponse {
   name?: string;
   error?: string;
   maxLimitBytes?: number;
-  temporary?: boolean;
+  volatile?: boolean;
+  durationMiliseconds?: number;
 }

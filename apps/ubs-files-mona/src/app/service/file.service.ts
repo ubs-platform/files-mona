@@ -6,8 +6,7 @@ import { UserDTO } from '@ubs-platform/users-common';
 import { FileMeta } from '../dto/file-meta';
 import { FileRequest } from '../dto/file-request';
 import sharp from 'sharp';
-import Jimp from 'jimp';
-import * as WebpConverter from 'webp-converter';
+import { FileVolatileTag } from '../dto/file-volatile-tag';
 @Injectable()
 export class FileService {
   constructor(@InjectModel(FileModel.name) private fileModel: Model<FileDoc>) {}
@@ -19,6 +18,27 @@ export class FileService {
       },
       console.error
     );
+  }
+
+  async updateVolatilities(volatilities: FileVolatileTag[]) {
+    for (let index = 0; index < volatilities.length; index++) {
+      const volatility = volatilities[index];
+      const existFile = await this.findByNamePure(
+        volatility.category,
+        volatility.name
+      );
+      this.setVotaility(
+        existFile,
+        volatility.volatile,
+        volatility.durationMiliseconds
+      );
+
+      // existFile.volatile = volatility.volatile;
+      // existFile.expireAt = new Date(
+      //   Date.now() + volatility.durationMiliseconds
+      // );
+      await existFile.save();
+    }
   }
 
   async findByName(category: string, name: string): Promise<FileMeta | null> {
@@ -69,12 +89,25 @@ export class FileService {
       f.length = ft.size;
       f.name = ft.name;
       f.category = ft.category;
+      this.setVotaility(f, ft.volatile, ft.durationMiliseconds);
       f = await f.save();
       return remaining;
     } catch (error) {
       console.error(error);
     }
   }
+
+  private setVotaility(
+    f: import('mongoose').Document<unknown, {}, FileDoc> &
+      FileModel &
+      Document & { _id: import('mongoose').Types.ObjectId },
+    volatile,
+    durationMiliseconds
+  ) {
+    f.volatile = volatile ?? true;
+    f.expireAt = new Date(Date.now() + (durationMiliseconds ?? 3600000));
+  }
+
   async applyOptimisations(ft: FileRequest): Promise<FileRequest> {
     if (
       ft.mimeType == 'image/jpeg' ||

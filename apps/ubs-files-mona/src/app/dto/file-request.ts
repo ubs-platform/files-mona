@@ -4,4 +4,6 @@ export interface FileRequest {
   size: number;
   name: string;
   category: string;
+  volatile: boolean;
+  durationMiliseconds: number;
 }
