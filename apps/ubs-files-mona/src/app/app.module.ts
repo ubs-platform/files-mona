@@ -8,9 +8,11 @@ import { join } from 'path';
 import { FileModel, FileSchema } from './model/file.schema';
 import { ImageFileController } from './controller/file.controller';
 import { FileService } from './service/file.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     MongooseModule.forRoot(
       `mongodb://${process.env.NX_MONGO_USERNAME}:${
         process.env.NX_MONGO_PASSWORD
