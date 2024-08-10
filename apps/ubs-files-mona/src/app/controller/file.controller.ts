@@ -21,7 +21,12 @@ import { FileService } from '../service/file.service';
 import { ObjectId } from 'mongoose';
 import { Response } from 'express';
 
-import { UserDTO, UserGeneralInfoDTO } from '@ubs-platform/users-common';
+import {
+  UserAuthBackendDTO,
+  UserDTO,
+  UserFullDto,
+  UserGeneralInfoDTO,
+} from '@ubs-platform/users-common';
 import * as FileSystem from 'fs/promises';
 import {
   ClientKafka,
@@ -38,8 +43,12 @@ import {
   JwtAuthGuard,
   CurrentUser,
 } from '@ubs-platform/users-mona-microservice-helper';
-import { FileCategoryResponse } from '../dto/file-category-response';
+import {
+  UploadFileCategoryRequest,
+  UploadFileCategoryResponse,
+} from '../dto/file-category-response';
 import { FileVolatileTag } from '../dto/file-volatile-tag';
+import { FileVolatilityIssue } from '../dto/file-volatility-issue';
 @Controller('file')
 export class ImageFileController {
   uploadClients: { [key: string]: ClientProxy | ClientKafka | ClientRMQ } = {};
@@ -70,19 +79,15 @@ export class ImageFileController {
 
   @Put('/volatility')
   @UseGuards(JwtAuthGuard)
-  async applyVolatilities(@Body() volatilities: FileVolatileTag[]) {
+  async applyVolatilities(
+    @Body() volatilities: FileVolatileTag[],
+    @CurrentUser() currentUser: UserAuthBackendDTO
+  ) {
     for (let index = 0; index < volatilities.length; index++) {
       const volatile = volatilities[index];
-      const catVolatileClient = this.generateTopicClientForVolatileChange(
-        volatile.category
-      );
-      const topic = this.generateTopicForUpload({ e });
-
-      catVolatileClient.send();
+      await this.sendCheckForVolatile(volatile, currentUser);
     }
     await this.fservice.updateVolatilities(volatilities);
-    // this.checkMimeTypeAndExtension(file);
-    // return await this.uploadFile1(file, params, user);
   }
 
   @Put('/:type/:objectId')
@@ -91,7 +96,7 @@ export class ImageFileController {
   async uploadFile(
     @UploadedFile() file: any,
     @Param() params: { type: string; objectId?: string },
-    @CurrentUser() user: UserDTO
+    @CurrentUser() user: UserAuthBackendDTO
   ) {
     this.checkMimeTypeAndExtension(file);
     return await this.uploadFile1(file, params, user);
@@ -103,7 +108,7 @@ export class ImageFileController {
   async uploadFileOnlyType(
     @UploadedFile() file: any,
     @Param() params: { type: string },
-    @CurrentUser() user: UserDTO
+    @CurrentUser() user: UserAuthBackendDTO
   ) {
     this.checkMimeTypeAndExtension(file);
     return await this.uploadFile1(file, params, user);
@@ -125,14 +130,23 @@ export class ImageFileController {
   async uploadFile1(
     file: any,
     params: { type: string; objectId?: string },
-    user: UserDTO
+    user: UserAuthBackendDTO
   ) {
-    const topic = this.generateTopicForUpload(params);
-    const client = this.generateTopicClientForUpload(topic);
+    console.info('Category Response Befor');
 
-    const categoryResponse: FileCategoryResponse = await lastValueFrom(
-      client.send(topic, { userId: user.id, objectId: params.objectId })
-    );
+    // const topic = this.generateTopicForUpload(params);
+    const categoryResponse: UploadFileCategoryResponse =
+      await this.sendCheckForUpload(params.type, {
+        userId: user.id,
+        objectId: params.objectId,
+        roles: user.roles,
+      });
+
+    console.info('Category Response', categoryResponse);
+
+    //  = await lastValueFrom(
+    //   client.send(topic)
+    // );
     const maxLimitBytes = categoryResponse.maxLimitBytes | 1000000;
     if (categoryResponse.category && categoryResponse.name) {
       console.info(file);
@@ -165,39 +179,44 @@ export class ImageFileController {
     }
   }
 
-  private generateTopicClientForUpload(topic: string) {
+  private async sendCheckForUpload(type: string, v: UploadFileCategoryRequest) {
+    console.info(type, v);
+    const topic = `file-upload-${type}`;
     if (this.uploadClients[topic] == null) {
       this.uploadClients[topic] = ClientProxyFactory.create({
         ...getMicroserviceConnection(''),
       } as any) as any as ClientKafka;
       this.uploadClients[topic]['subscribeToResponseOf']?.(topic);
 
-      console.debug(this.uploadClients);
+      // console.debug(this.uploadClients);
     }
-    return this.uploadClients[topic];
+    const cl = this.uploadClients[topic];
+    console.info(cl);
+    return await lastValueFrom(cl.send(topic, v));
   }
 
-  private generateTopicClientForVolatileChange(topic: string) {
+  private async sendCheckForVolatile(
+    volatileTag: FileVolatileTag,
+    user?: UserAuthBackendDTO
+  ) {
+    const topic = `file-volatility-${volatileTag.category}`;
     if (this.volatileClients[topic] == null) {
       this.volatileClients[topic] = ClientProxyFactory.create({
         ...getMicroserviceConnection(''),
       } as any) as any as ClientKafka;
       this.volatileClients[topic]['subscribeToResponseOf']?.(topic);
-
-      console.debug(this.volatileClients);
     }
-    return this.volatileClients[topic];
-  }
-
-  private generateTopicForUpload(params: { type: string; objectId?: string }) {
-    return `file-upload-${params.type}`;
-  }
-
-  private generateTopicForVolatile(params: {
-    type: string;
-    objectId?: string;
-  }) {
-    return `file-volatility-${params.type}`;
+    const client = this.volatileClients[topic];
+    const issue = (await lastValueFrom(
+      client.send(topic, {
+        ...volatileTag,
+        userId: user?.id,
+        roles: user.roles,
+      })
+    )) as FileVolatilityIssue;
+    if (issue) {
+      throw new BadRequestException(issue.error);
+    }
   }
 
   checkMimeTypeAndExtension(file) {
