@@ -25,7 +25,7 @@ import { FileService } from './service/file.service';
     MongooseModule.forFeature([{ name: FileModel.name, schema: FileSchema }]),
     ClientsModule.register([
       {
-        name: 'META_CHECK_CLIENT',
+        name: 'KafkaClient',
         ...getMicroserviceConnection(''),
       } as any,
     ]),
