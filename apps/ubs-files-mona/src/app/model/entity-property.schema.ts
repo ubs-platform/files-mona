@@ -11,6 +11,8 @@ export class EntityProperty {
   maxFileSizeBytes: number;
   @Prop([String])
   acceptedType: String[];
+  @Prop({ type: Boolean, default: true })
+  volatileAtInitialized: Boolean;
 }
 
 export type FileDoc = FileModel & Document;
