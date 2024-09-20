@@ -202,9 +202,9 @@ export class ImageFileController {
     const topic = `file-volatility-${volatileTag.category}`;
     if (this.volatileClients[topic] == null) {
       this.volatileClients[topic] = ClientProxyFactory.create({
-        ...getMicroserviceConnection(''),
-      } as any) as any as ClientKafka;
-      this.volatileClients[topic]['subscribeToResponseOf']?.(topic);
+       
+      } as any) as any as ClientProxy;
+      // this.volatileClients[topic]['subscribeToResponseOf']?.(topic);
     }
     const client = this.volatileClients[topic];
     const issue = (await lastValueFrom(

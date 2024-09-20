@@ -1,9 +1,11 @@
 export interface EntityPropertyDto {
-  entityGroup: String;
-  entityName: String;
-  maxFileSizeBytes: number;
-  acceptedType: String[];
-  volatileAtInitialized: Boolean;
+  category: String;
+  nestTcpUrl: String; 
+  // entityGroup: String;
+  // entityName: String;
+  // maxFileSizeBytes: Number;
+  // acceptedType: String[];
+  // volatileAtInitialized: Boolean;
 }
 
 export interface EntityPropertySearchDto {
