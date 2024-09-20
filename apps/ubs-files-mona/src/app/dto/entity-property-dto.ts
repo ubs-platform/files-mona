@@ -1,6 +1,7 @@
 export interface EntityPropertyDto {
   category: String;
-  nestTcpUrl: String; 
+  serviceTcpHost: String;
+  serviceTcpPort: String;
   // entityGroup: String;
   // entityName: String;
   // maxFileSizeBytes: Number;
@@ -9,6 +10,5 @@ export interface EntityPropertyDto {
 }
 
 export interface EntityPropertySearchDto {
-  entityGroup: String;
-  entityName: String;
+  category: String;
 }

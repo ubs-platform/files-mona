@@ -1,7 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { EntityProperty } from '../model/entity-property.schema';
 import { Model } from 'mongoose';
-import { EntityPropertyDto } from '../dto/entity-property-dto';
+import {
+  EntityPropertyDto,
+  EntityPropertySearchDto,
+} from '../dto/entity-property-dto';
 
 @Injectable()
 export class EntityPropertyService {
@@ -15,23 +18,39 @@ export class EntityPropertyService {
 
   async update(ep: EntityPropertyDto) {
     let model = await this.entityPropertyModel.findOne({
-      entityGroup: ep.entityGroup,
-      entityName: ep.entityName,
+      category: ep.category,
     });
     if (!model) {
       model = new this.entityPropertyModel();
-      model.entityGroup = ep.entityGroup;
-      model.entityName = ep.entityName;
+      model.category = ep.category;
     }
-    model.acceptedType = ep.acceptedType;
-    model.maxFileSizeBytes = ep.maxFileSizeBytes;
-    model.volatileAtInitialized = ep.volatileAtInitialized;
+    model.serviceTcpHost = ep.serviceTcpHost;
+    model.serviceTcpPort = ep.serviceTcpPort;
     const finalVal = await model.save();
+    return this.mapToDto(finalVal);
+  }
+
+  async findOne(ep: EntityPropertySearchDto) {
+    let model = await this.entityPropertyModel.findOne({
+      category: ep.category,
+    });
+    if (model) {
+      return this.mapToDto(model);
+    }
+    throw new NotFoundException('Entity Property: ' + ep.category);
+    // model.nestTcpUrl = ep.nestTcpUrl;
+    // model.maxFileSizeBytes = ep.maxFileSizeBytes;
+    // model.volatileAtInitialized = ep.volatileAtInitialized;
+  }
+
+  private mapToDto(
+    model: import('mongoose').Document<unknown, {}, EntityProperty> &
+      EntityProperty & { _id: import('mongoose').Types.ObjectId }
+  ) {
     return {
-      entityGroup: finalVal.entityGroup,
-      entityName: finalVal.entityName,
-      volatileAtInitialized: finalVal.volatileAtInitialized,
-      acceptedType: finalVal.acceptedType,
+      category: model.category,
+      serviceTcpPort: model.serviceTcpPort,
+      serviceTcpHost: model.serviceTcpHost,
     } as EntityPropertyDto;
   }
 }

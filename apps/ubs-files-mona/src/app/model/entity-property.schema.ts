@@ -4,15 +4,13 @@ import { FileModel } from './file.schema';
 @Schema()
 export class EntityProperty {
   @Prop(String)
-  entityGroup: String;
+  category: String;
+
   @Prop(String)
-  entityName: String;
-  @Prop({ type: Number, default: 3000000 })
-  maxFileSizeBytes: number;
-  @Prop([String])
-  acceptedType: String[];
-  @Prop({ type: Boolean, default: true })
-  volatileAtInitialized: Boolean;
+  serviceTcpHost: String;
+
+  @Prop(String)
+  serviceTcpPort: String;
 }
 
 export type FileDoc = FileModel & Document;
