@@ -12,7 +12,6 @@ export class EntityPropertyController {
   @EventPattern('register-category')
   registerCategory(ep: EntityPropertyDto) {
     console.info('Registering category', ep.category);
-    exec(`kdialog --passivepopup 'register-category ${ep.category}' 5`);
     this.epService.update(ep);
   }
 }
