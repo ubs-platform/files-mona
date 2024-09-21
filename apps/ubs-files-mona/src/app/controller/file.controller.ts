@@ -34,6 +34,8 @@ import {
   ClientProxyFactory,
   ClientRMQ,
   MessagePattern,
+  TcpClientOptions,
+  Transport,
 } from '@nestjs/microservices';
 import { FileRequest } from '../dto/file-request';
 import { lastValueFrom } from 'rxjs';
@@ -49,11 +51,10 @@ import {
 } from '../dto/file-category-response';
 import { FileVolatileTag } from '../dto/file-volatile-tag';
 import { FileVolatilityIssue } from '../dto/file-volatility-issue';
+import { EntityPropertyService } from '../service/entity-property.service';
 @Controller('file')
 export class ImageFileController {
-  uploadClients: { [key: string]: ClientProxy | ClientKafka | ClientRMQ } = {};
-  volatileClients: { [key: string]: ClientProxy | ClientKafka | ClientRMQ } =
-    {};
+  clients: { [key: string]: ClientProxy | ClientKafka | ClientRMQ } = {};
   potentialMalicousMimeTypes = [
     'application/x-msdownload',
     // 'application/octet-stream',
@@ -75,7 +76,10 @@ export class ImageFileController {
     'yum',
     'rpm',
   ];
-  constructor(private fservice: FileService) {}
+  constructor(
+    private fservice: FileService,
+    private entityPropertyService: EntityPropertyService
+  ) {}
 
   @Put('/volatility')
   @UseGuards(JwtAuthGuard)
@@ -182,16 +186,7 @@ export class ImageFileController {
   private async sendCheckForUpload(type: string, v: UploadFileCategoryRequest) {
     console.info(type, v);
     const topic = `file-upload-${type}`;
-    if (this.uploadClients[topic] == null) {
-      this.uploadClients[topic] = ClientProxyFactory.create({
-        ...getMicroserviceConnection(''),
-      } as any) as any as ClientKafka;
-      this.uploadClients[topic]['subscribeToResponseOf']?.(topic);
-
-      // console.debug(this.uploadClients);
-    }
-    const cl = this.uploadClients[topic];
-    console.info(cl);
+    const cl = await this.createClient(type);
     return await lastValueFrom(cl.send(topic, v));
   }
 
@@ -200,13 +195,8 @@ export class ImageFileController {
     user?: UserAuthBackendDTO
   ) {
     const topic = `file-volatility-${volatileTag.category}`;
-    if (this.volatileClients[topic] == null) {
-      this.volatileClients[topic] = ClientProxyFactory.create({
-       
-      } as any) as any as ClientProxy;
-      // this.volatileClients[topic]['subscribeToResponseOf']?.(topic);
-    }
-    const client = this.volatileClients[topic];
+
+    const client = await this.createClient(volatileTag.category);
     const issue = (await lastValueFrom(
       client.send(topic, {
         ...volatileTag,
@@ -217,6 +207,24 @@ export class ImageFileController {
     if (issue) {
       throw new BadRequestException(issue.error);
     }
+  }
+
+  private async createClient(categoryName: string) {
+    if (this.clients[categoryName] != null) {
+      return this.clients[categoryName];
+    }
+    const ep = await this.entityPropertyService.findOne({
+      category: categoryName,
+    });
+    const cl = ClientProxyFactory.create({
+      transport: Transport.TCP,
+      options: {
+        host: `${ep.serviceTcpHost}`,
+        port: `${ep.serviceTcpPort}`,
+      },
+    } as any) as any as ClientProxy;
+    this.clients[categoryName] = cl;
+    return cl;
   }
 
   checkMimeTypeAndExtension(file) {

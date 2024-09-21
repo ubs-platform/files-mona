@@ -13,5 +13,6 @@ export class EntityProperty {
   serviceTcpPort: String;
 }
 
-export type FileDoc = FileModel & Document;
-export const FileSchema = SchemaFactory.createForClass(FileModel);
+export type EntityPropertyDoc = EntityProperty & Document;
+export const EntityPropertySchema =
+  SchemaFactory.createForClass(EntityProperty);

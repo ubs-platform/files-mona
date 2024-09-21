@@ -8,9 +8,6 @@ import {
 
 @Injectable()
 export class EntityPropertyService {
-  /**
-   *
-   */
   constructor(
     @Inject(EntityProperty.name)
     private entityPropertyModel: Model<EntityProperty>
@@ -30,14 +27,16 @@ export class EntityPropertyService {
     return this.mapToDto(finalVal);
   }
 
-  async findOne(ep: EntityPropertySearchDto) {
+  async findOne(
+    ep: EntityPropertySearchDto
+  ): Promise<EntityPropertyDto | null> {
     let model = await this.entityPropertyModel.findOne({
       category: ep.category,
     });
     if (model) {
       return this.mapToDto(model);
     }
-    throw new NotFoundException('Entity Property: ' + ep.category);
+    return null;
     // model.nestTcpUrl = ep.nestTcpUrl;
     // model.maxFileSizeBytes = ep.maxFileSizeBytes;
     // model.volatileAtInitialized = ep.volatileAtInitialized;

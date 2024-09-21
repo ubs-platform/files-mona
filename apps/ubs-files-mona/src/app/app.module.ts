@@ -8,6 +8,12 @@ import { join } from 'path';
 import { FileModel, FileSchema } from './model/file.schema';
 import { ImageFileController } from './controller/file.controller';
 import { FileService } from './service/file.service';
+import {
+  EntityProperty,
+  EntityPropertySchema,
+} from './model/entity-property.schema';
+import { EntityPropertyService } from './service/entity-property.service';
+import { EntityPropertyController } from './controller/entity-property.controller';
 
 @Module({
   imports: [
@@ -22,7 +28,10 @@ import { FileService } from './service/file.service';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'assets'),
     }),
-    MongooseModule.forFeature([{ name: FileModel.name, schema: FileSchema }]),
+    MongooseModule.forFeature([
+      { name: FileModel.name, schema: FileSchema },
+      { name: EntityProperty.name, schema: EntityPropertySchema },
+    ]),
     ClientsModule.register([
       {
         name: 'KafkaClient',
@@ -31,7 +40,7 @@ import { FileService } from './service/file.service';
     ]),
     BackendJwtUtilsModule,
   ],
-  controllers: [ImageFileController],
-  providers: [FileService],
+  controllers: [ImageFileController, EntityPropertyController],
+  providers: [FileService, EntityPropertyService],
 })
 export class AppModule {}
