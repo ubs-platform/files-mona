@@ -12,9 +12,10 @@ import { getMicroserviceConnection } from '@ubs-platform/nest-microservice-setup
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const globalPrefix = 'api';
-  app.setGlobalPrefix(globalPrefix);
   app.connectMicroservice(getMicroserviceConnection(''));
+  app.setGlobalPrefix(globalPrefix);
   const port = process.env.PORT || 3000;
+  app.startAllMicroservices();
   await app.listen(port);
   Logger.log(
     `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`

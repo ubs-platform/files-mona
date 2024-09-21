@@ -1,1 +1,1 @@
-export type FileVolatilityIssue = null | undefined | { error: string };
+export type FileVolatilityIssue = { success: boolean; error: string };

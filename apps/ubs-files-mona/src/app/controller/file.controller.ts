@@ -204,7 +204,7 @@ export class ImageFileController {
         roles: user.roles,
       })
     )) as FileVolatilityIssue;
-    if (issue) {
+    if (!issue.success) {
       throw new BadRequestException(issue.error);
     }
   }
@@ -216,6 +216,7 @@ export class ImageFileController {
     const ep = await this.entityPropertyService.findOne({
       category: categoryName,
     });
+    debugger;
     const cl = ClientProxyFactory.create({
       transport: Transport.TCP,
       options: {

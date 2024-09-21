@@ -5,11 +5,12 @@ import {
   EntityPropertyDto,
   EntityPropertySearchDto,
 } from '../dto/entity-property-dto';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class EntityPropertyService {
   constructor(
-    @Inject(EntityProperty.name)
+    @InjectModel(EntityProperty.name)
     private entityPropertyModel: Model<EntityProperty>
   ) {}
 
