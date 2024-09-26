@@ -5,7 +5,7 @@
   "scripts": {
     "start": "npx nx serve ubs-files-mona",
     "build": "docker build . --tag hcangunduz/ubs-files-mona",
-    "publish": "npm run build && docker push hcangunduz/ubs-files-mona"
+    "build-publish": "npm run build && docker push hcangunduz/ubs-files-mona"
   },
   "private": true,
   "dependencies": {
