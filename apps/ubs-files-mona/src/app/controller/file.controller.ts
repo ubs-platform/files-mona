@@ -52,6 +52,7 @@ import {
 import { FileVolatileTag } from '../dto/file-volatile-tag';
 import { FileVolatilityIssue } from '../dto/file-volatility-issue';
 import { EntityPropertyService } from '../service/entity-property.service';
+import { clearTimeout } from 'timers';
 @Controller('file')
 export class ImageFileController {
   clients: { [key: string]: ClientProxy | ClientKafka | ClientRMQ } = {};
@@ -76,6 +77,7 @@ export class ImageFileController {
     'yum',
     'rpm',
   ];
+  cacheClearTimeoutPtr: NodeJS.Timeout;
   constructor(
     private fservice: FileService,
     private entityPropertyService: EntityPropertyService
@@ -210,6 +212,10 @@ export class ImageFileController {
   }
 
   private async createClient(categoryName: string) {
+    if (this.cacheClearTimeoutPtr) {
+      clearTimeout(this.cacheClearTimeoutPtr);
+      this.cacheClearTimeoutPtr = null;
+    }
     if (this.clients[categoryName] != null) {
       return this.clients[categoryName];
     }
@@ -225,6 +231,11 @@ export class ImageFileController {
       },
     } as any) as any as ClientProxy;
     this.clients[categoryName] = cl;
+    this.cacheClearTimeoutPtr = setTimeout(() =>  {
+      this.clients = {};
+      console.info("Cache temizlendi")
+      this.cacheClearTimeoutPtr = null;
+    }, 2000);
     return cl;
   }
 
