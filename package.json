@@ -5,7 +5,7 @@
   "scripts": {
     "start": "npx nx serve ubs-files-mona",
     "build": "docker build . --tag hcangunduz/ubs-files-mona",
-    "publish": "npm run build && docker push hcangunduz/ubs-files-mona"
+    "build-publish": "npm run build && docker push hcangunduz/ubs-files-mona"
   },
   "private": true,
   "dependencies": {
@@ -17,9 +17,9 @@
     "@nestjs/platform-express": "^10.0.2",
     "@nestjs/schedule": "^4.1.0",
     "@nestjs/serve-static": "^4.0.2",
-    "@ubs-platform/nest-microservice-setup-util": "~2.2.0",
-    "@ubs-platform/users-common": "~2.2.0",
-    "@ubs-platform/users-mona-microservice-helper": "~2.2.0",
+    "@ubs-platform/nest-microservice-setup-util": "3.0.11",
+    "@ubs-platform/users-common": "3.0.11",
+    "@ubs-platform/users-mona-microservice-helper": "3.0.11",
     "axios": "^1.6.0",
     "jimp": "^0.22.12",
     "kafkajs": "^2.2.4",
