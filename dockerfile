@@ -3,7 +3,7 @@ WORKDIR /app
 # COPY package.json  package-lock.json ./
 COPY . ./
 RUN npm install
-RUN npx --yes nx run ubs-files-mona:build --skipNxCache
+RUN npx --yes nx run ubs-files-mona:build --skip-nx-cache
 
 FROM node:20.10.0-alpine
 WORKDIR /app

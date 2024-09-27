@@ -14,9 +14,11 @@ import {
 } from './model/entity-property.schema';
 import { EntityPropertyService } from './service/entity-property.service';
 import { EntityPropertyController } from './controller/entity-property.controller';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     MongooseModule.forRoot(
       `mongodb://${process.env.NX_MONGO_USERNAME}:${
         process.env.NX_MONGO_PASSWORD

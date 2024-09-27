@@ -7,6 +7,7 @@ import { FileMeta } from '../dto/file-meta';
 import { FileRequest } from '../dto/file-request';
 import sharp from 'sharp';
 import { FileVolatileTag } from '../dto/file-volatile-tag';
+import { Cron } from '@nestjs/schedule';
 @Injectable()
 export class FileService {
   constructor(@InjectModel(FileModel.name) private fileModel: Model<FileDoc>) {}
@@ -131,5 +132,18 @@ export class FileService {
       ft.mimeType = 'image/webp';
     }
     return ft;
+  }
+
+  @Cron('0 20 4 * * *')
+  async handleCron() {
+    console.info('Expired Volatile Files about to be removed');
+    console.info(
+      await this.fileModel.deleteMany({
+        volatile: true,
+        expireAt: {
+          $lte: new Date(),
+        },
+      })
+    );
   }
 }
