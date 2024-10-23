@@ -7,7 +7,6 @@ import { exec } from 'child_process';
 @Controller()
 export class EntityPropertyController {
   constructor(private epService: EntityPropertyService) {}
-  //BURDASIN
 
   @EventPattern('register-category')
   registerCategory(ep: EntityPropertyDto) {
