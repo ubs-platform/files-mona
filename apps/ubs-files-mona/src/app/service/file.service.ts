@@ -64,13 +64,13 @@ export class FileService {
           const imageSharp = await sharp(fileBin, {});
           const meta = await imageSharp.metadata();
           if (meta.width > widthForImage) {
-            const buff = await (
-              await imageSharp.resize({
-                width: widthForImage,
-                withoutEnlargement: true,
-                fit: 'contain',
-              })
-            ).toBuffer();
+            const resized = await imageSharp.resize({
+              width: widthForImage,
+              withoutEnlargement: true,
+              fit: 'contain',
+            });
+
+            const buff = await resized.toBuffer();
             fileBin = buff;
             file.scaledImages.push({
               width: widthForImage,
