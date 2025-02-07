@@ -53,7 +53,7 @@ export class FileService {
       let fileBin = await this.determineBin(file, widthForImage_);
       // file.
       try {
-        file.save();
+        await file.save();
       } catch (error) {
         console.error(error);
       }
@@ -74,7 +74,7 @@ export class FileService {
     try {
       const widthForImageInt = parseInt(widthForImage_ as any);
       if (this.isImage(file.mimeType) && !isNaN(widthForImageInt)) {
-        // if (file.scaledImages == null) file.scaledImages = [];
+        if (file.scaledImages == null) file.scaledImages = [];
         const widthForImageRnd = Math.max(
           Math.floor(widthForImageInt / 50) * 50,
           100,
@@ -96,22 +96,22 @@ export class FileService {
 
             const buff = await resized.webp().toBuffer();
             fileBin = buff;
-            // file.scaledImages.push({
-            //   width: widthForImageRnd,
-            //   file: buff,
-            //   useSame: false,
-            // });
+            file.scaledImages.push({
+              width: widthForImageRnd,
+              file: buff,
+              useSame: false,
+            });
           } else {
-            // file.scaledImages.push({
-            //   width: widthForImageRnd,
-            //   file: null,
-            //   useSame: true,
-            // });
+            file.scaledImages.push({
+              width: widthForImageRnd,
+              file: null,
+              useSame: true,
+            });
           }
           // for fast response for phones
-          // file.scaledImages = file.scaledImages.sort(
-          //   (a, b) => a.width - b.width,
-          // );
+          file.scaledImages = file.scaledImages.sort(
+            (a, b) => a.width - b.width,
+          );
         }
       }
     } catch (ex) {
