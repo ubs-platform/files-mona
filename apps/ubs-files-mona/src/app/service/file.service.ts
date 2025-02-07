@@ -96,22 +96,22 @@ export class FileService {
 
             const buff = await resized.webp().toBuffer();
             fileBin = buff;
-            file.scaledImages.push({
-              width: widthForImageRnd,
-              file: buff,
-              useSame: false,
-            });
+            // file.scaledImages.push({
+            //   width: widthForImageRnd,
+            //   file: buff,
+            //   useSame: false,
+            // });
           } else {
-            file.scaledImages.push({
-              width: widthForImageRnd,
-              file: null,
-              useSame: true,
-            });
+            // file.scaledImages.push({
+            //   width: widthForImageRnd,
+            //   file: null,
+            //   useSame: true,
+            // });
           }
           // for fast response for phones
-          file.scaledImages = file.scaledImages.sort(
-            (a, b) => a.width - b.width,
-          );
+          // file.scaledImages = file.scaledImages.sort(
+          //   (a, b) => a.width - b.width,
+          // );
         }
       }
     } catch (ex) {
