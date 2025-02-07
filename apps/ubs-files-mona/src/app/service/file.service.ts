@@ -52,7 +52,11 @@ export class FileService {
       file.lastFetch = new Date();
       let fileBin = await this.determineBin(file, widthForImage_);
       // file.
-      file.save();
+      try {
+        file.save();
+      } catch (error) {
+        console.error(error);
+      }
 
       return {
         id: file._id,
