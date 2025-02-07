@@ -50,7 +50,24 @@ export class FileService {
     const file = await this.findByNamePure(category, name);
     if (file != null) {
       file.lastFetch = new Date();
-      let fileBin = file.file;
+      let fileBin = await this.determineBin(file, widthForImage_);
+      // file.
+      file.save();
+
+      return {
+        id: file._id,
+        file: fileBin,
+        mimetype: file.mimeType,
+        userId: file.userId,
+      };
+    } else {
+      return null;
+    }
+  }
+
+  private async determineBin(file: FileDoc, widthForImage_: string | number) {
+    let fileBin = file.file;
+    try {
       const widthForImageInt = parseInt(widthForImage_ as any);
       if (this.isImage(file.mimeType) && !isNaN(widthForImageInt)) {
         file.scaledImages = [];
@@ -61,16 +78,16 @@ export class FileService {
             fileBin = Buffer.from(a.file.buffer);
           }
         } else {
-          const imageSharp = await sharp(fileBin, {});
+          const imageSharp = sharp(fileBin, {});
           const meta = await imageSharp.metadata();
           if (meta.width > widthForImageRnd) {
-            const resized = await imageSharp.resize({
+            const resized = imageSharp.resize({
               width: widthForImageRnd,
               withoutEnlargement: true,
               fit: 'contain',
             });
 
-            const buff = await (await resized.webp()).toBuffer();
+            const buff = await resized.webp().toBuffer();
             fileBin = buff;
             file.scaledImages.push({
               width: widthForImageRnd,
@@ -90,18 +107,10 @@ export class FileService {
           );
         }
       }
-      // file.
-      file.save();
-
-      return {
-        id: file._id,
-        file: fileBin,
-        mimetype: file.mimeType,
-        userId: file.userId,
-      };
-    } else {
-      return null;
+    } catch (ex) {
+      console.error(ex);
     }
+    return fileBin;
   }
 
   private async findByNamePure(category: string, name: string) {
