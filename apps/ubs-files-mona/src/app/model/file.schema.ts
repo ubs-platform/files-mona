@@ -44,7 +44,7 @@ export class FileModel {
   @Prop({ type: Date, default: new Date(Date.now() + 3600000) })
   expireAt: Date;
 
-  @Prop([ImageDataScaled])
+  @Prop({ type: [ImageDataScaled], default: [] })
   scaledImages: ImageDataScaled[] = [];
 }
 
