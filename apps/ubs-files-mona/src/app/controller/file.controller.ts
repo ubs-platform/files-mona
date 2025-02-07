@@ -10,6 +10,7 @@ import {
   ParseFilePipe,
   Post,
   Put,
+  Query,
   Res,
   UploadedFile,
   UseGuards,
@@ -80,14 +81,14 @@ export class ImageFileController {
   cacheClearTimeoutPtr: NodeJS.Timeout;
   constructor(
     private fservice: FileService,
-    private entityPropertyService: EntityPropertyService
+    private entityPropertyService: EntityPropertyService,
   ) {}
 
   @Put('/volatility')
   @UseGuards(JwtAuthGuard)
   async applyVolatilities(
     @Body() volatilities: FileVolatileTag[],
-    @CurrentUser() currentUser: UserAuthBackendDTO
+    @CurrentUser() currentUser: UserAuthBackendDTO,
   ) {
     for (let index = 0; index < volatilities.length; index++) {
       const volatile = volatilities[index];
@@ -102,7 +103,7 @@ export class ImageFileController {
   async uploadFile(
     @UploadedFile() file: any,
     @Param() params: { type: string; objectId?: string },
-    @CurrentUser() user: UserAuthBackendDTO
+    @CurrentUser() user: UserAuthBackendDTO,
   ) {
     this.checkMimeTypeAndExtension(file);
     return await this.uploadFile1(file, params, user);
@@ -114,7 +115,7 @@ export class ImageFileController {
   async uploadFileOnlyType(
     @UploadedFile() file: any,
     @Param() params: { type: string },
-    @CurrentUser() user: UserAuthBackendDTO
+    @CurrentUser() user: UserAuthBackendDTO,
   ) {
     this.checkMimeTypeAndExtension(file);
     return await this.uploadFile1(file, params, user);
@@ -123,9 +124,14 @@ export class ImageFileController {
   @Get('/:category/:name')
   async fetchFileContent(
     @Param() params: { category: string; name: string },
-    @Res() response: Response
+    @Res() response: Response,
+    @Query('width') width?: string | number | null,
   ) {
-    const fil = await this.fservice.findByName(params.category, params.name);
+    const fil = await this.fservice.findByName(
+      params.category,
+      params.name,
+      width,
+    );
     if (fil) {
       return response.status(200).contentType(fil.mimetype).send(fil.file);
     } else {
@@ -136,7 +142,7 @@ export class ImageFileController {
   async uploadFile1(
     file: any,
     params: { type: string; objectId?: string },
-    user: UserAuthBackendDTO
+    user: UserAuthBackendDTO,
   ) {
     console.info('Category Response Befor');
 
@@ -168,7 +174,7 @@ export class ImageFileController {
           volatile: categoryResponse.volatile,
           durationMiliseconds: categoryResponse.durationMiliseconds,
         },
-        'start'
+        'start',
       );
       return {
         category: categoryResponse.category,
@@ -194,7 +200,7 @@ export class ImageFileController {
 
   private async sendCheckForVolatile(
     volatileTag: FileVolatileTag,
-    user?: UserAuthBackendDTO
+    user?: UserAuthBackendDTO,
   ) {
     const topic = `file-volatility-${volatileTag.category}`;
 
@@ -204,7 +210,7 @@ export class ImageFileController {
         ...volatileTag,
         userId: user?.id,
         roles: user.roles,
-      })
+      }),
     )) as FileVolatilityIssue;
     if (!issue.success) {
       throw new BadRequestException(issue.error);
@@ -222,7 +228,6 @@ export class ImageFileController {
     const ep = await this.entityPropertyService.findOne({
       category: categoryName,
     });
-    debugger;
     const cl = ClientProxyFactory.create({
       transport: Transport.TCP,
       options: {
@@ -231,9 +236,9 @@ export class ImageFileController {
       },
     } as any) as any as ClientProxy;
     this.clients[categoryName] = cl;
-    this.cacheClearTimeoutPtr = setTimeout(() =>  {
+    this.cacheClearTimeoutPtr = setTimeout(() => {
       this.clients = {};
-      console.info("Cache temizlendi")
+      console.info('Cache temizlendi');
       this.cacheClearTimeoutPtr = null;
     }, 2000);
     return cl;

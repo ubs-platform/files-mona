@@ -1,6 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ObjectId } from 'mongoose';
-
+export class ImageDataScaled {
+  width: number;
+  file: Buffer;
+  useSame: boolean = false;
+}
 @Schema()
 export class FileModel {
   _id?: any;
@@ -39,6 +43,9 @@ export class FileModel {
 
   @Prop({ type: Date, default: new Date(Date.now() + 3600000) })
   expireAt: Date;
+
+  @Prop([ImageDataScaled])
+  scaledImages: ImageDataScaled[] = [];
 }
 
 export type FileDoc = FileModel & Document;

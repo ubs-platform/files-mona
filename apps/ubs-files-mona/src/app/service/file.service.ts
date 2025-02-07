@@ -17,7 +17,7 @@ export class FileService {
       {
         name: name,
       },
-      console.error
+      console.error,
     );
   }
 
@@ -26,12 +26,12 @@ export class FileService {
       const volatility = volatilities[index];
       const existFile = await this.findByNamePure(
         volatility.category,
-        volatility.name
+        volatility.name,
       );
       this.setVotaility(
         existFile,
         volatility.volatile,
-        volatility.durationMiliseconds
+        volatility.durationMiliseconds,
       );
 
       // existFile.volatile = volatility.volatile;
@@ -42,15 +42,56 @@ export class FileService {
     }
   }
 
-  async findByName(category: string, name: string): Promise<FileMeta | null> {
+  async findByName(
+    category: string,
+    name: string,
+    widthForImage_?: string | number | null,
+  ): Promise<FileMeta | null> {
     const file = await this.findByNamePure(category, name);
     if (file != null) {
       file.lastFetch = new Date();
+      let fileBin = file.file;
+
+      const widthForImage = parseInt(widthForImage_ as any);
+      if (this.isImage(file.mimeType) && !isNaN(widthForImage)) {
+        // file.scaledImages = [];
+        const a = file.scaledImages.find((a) => a.width - widthForImage < 50);
+        if (a) {
+          if (!a.useSame) {
+            fileBin = a.file;
+          }
+        } else {
+          const imageSharp = await sharp(fileBin, {});
+          const meta = await imageSharp.metadata();
+          if (meta.width > widthForImage) {
+            const buff = await (
+              await imageSharp.resize({
+                width: widthForImage,
+                withoutEnlargement: true,
+                fit: 'contain',
+              })
+            ).toBuffer();
+            fileBin = buff;
+            file.scaledImages.push({
+              width: widthForImage,
+              file: buff,
+              useSame: false,
+            });
+          } else {
+            file.scaledImages.push({
+              width: widthForImage,
+              file: null,
+              useSame: true,
+            });
+          }
+        }
+      }
+      // file.
       file.save();
 
       return {
         id: file._id,
-        file: file.file,
+        file: fileBin,
         mimetype: file.mimeType,
         userId: file.userId,
       };
@@ -69,9 +110,9 @@ export class FileService {
 
   async uploadFile(
     ft: FileRequest,
-    mode: 'start' | 'continue'
+    mode: 'start' | 'continue',
   ): Promise<number> {
-    ft = await this.applyOptimisations(ft);
+    ft = await this.applyUploadOptimisations(ft);
     // if there is existing
     const exist = await this.findByNamePure(ft.category, ft.name);
     let f = exist || new this.fileModel();
@@ -103,35 +144,33 @@ export class FileService {
       FileModel &
       Document & { _id: import('mongoose').Types.ObjectId },
     volatile,
-    durationMiliseconds
+    durationMiliseconds,
   ) {
     f.volatile = volatile ?? true;
     f.expireAt = new Date(Date.now() + (durationMiliseconds ?? 3600000));
   }
 
-  async applyOptimisations(ft: FileRequest): Promise<FileRequest> {
-    if (
-      ft.mimeType == 'image/jpeg' ||
-      ft.mimeType == 'image/png' ||
-      ft.mimeType == 'image/gif' ||
-      ft.mimeType == 'image/apng' ||
-      ft.mimeType == 'image/avif'
-    ) {
-      // const img = await Jimp.read(ft.fileBytes as any);
-      // const webp = img.web
-      // const ext = ft.mimeType.
-      // let [, extension] = ft.mimeType.split('/');
-      // if (extension == 'jpeg') extension = 'jpg';
-      // const newBUff = await WebpConverter.buffer2webpbuffer(
-      //   ft.fileBytes,
-      //   extension,
-      //   '-q 80'
-      // );
+  async applyUploadOptimisations(ft: FileRequest): Promise<FileRequest> {
+    if (this.isImageNonWebP(ft.mimeType)) {
       const buff = await sharp(ft.fileBytesBuff, {}).webp({}).toBuffer();
       ft.fileBytesBuff = buff;
       ft.mimeType = 'image/webp';
     }
     return ft;
+  }
+
+  private isImageNonWebP(mimeType: string) {
+    return (
+      mimeType == 'image/jpeg' ||
+      mimeType == 'image/png' ||
+      mimeType == 'image/gif' ||
+      mimeType == 'image/apng' ||
+      mimeType == 'image/avif'
+    );
+  }
+
+  private isImage(mimeType: string) {
+    return this.isImageNonWebP(mimeType) || mimeType == 'image/webp';
   }
 
   @Cron('0 20 4 * * *')
@@ -143,7 +182,7 @@ export class FileService {
         expireAt: {
           $lte: new Date(),
         },
-      })
+      }),
     );
   }
 }
