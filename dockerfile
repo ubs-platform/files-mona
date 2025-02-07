@@ -2,7 +2,7 @@ FROM node:22.5.1-alpine as build
 WORKDIR /app
 # COPY package.json  package-lock.json ./
 COPY . ./
-RUN yarn install
+# RUN yarn install
 RUN npx --yes nx run ubs-files-mona:build --skip-nx-cache
 
 FROM node:22.5.1-alpine
