@@ -74,7 +74,7 @@ export class FileService {
     try {
       const widthForImageInt = parseInt(widthForImage_ as any);
       if (this.isImage(file.mimeType) && !isNaN(widthForImageInt)) {
-        if (file.scaledImages == null) file.scaledImages = [];
+        // if (file.scaledImages == null) file.scaledImages = [];
         const widthForImageRnd = Math.max(
           Math.floor(widthForImageInt / 50) * 50,
           100,
