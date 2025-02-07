@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ObjectId } from 'mongoose';
 export class ImageDataScaled {
   width: number;
-  file: Buffer;
+  file: Buffer | { buffer: any };
   useSame: boolean = false;
 }
 @Schema()

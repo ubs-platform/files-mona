@@ -51,39 +51,43 @@ export class FileService {
     if (file != null) {
       file.lastFetch = new Date();
       let fileBin = file.file;
-
-      const widthForImage = parseInt(widthForImage_ as any);
-      if (this.isImage(file.mimeType) && !isNaN(widthForImage)) {
-        // file.scaledImages = [];
-        const a = file.scaledImages.find((a) => a.width - widthForImage < 50);
+      const widthForImageInt = parseInt(widthForImage_ as any);
+      if (this.isImage(file.mimeType) && !isNaN(widthForImageInt)) {
+        file.scaledImages = [];
+        const widthForImageRnd = Math.floor(widthForImageInt / 50) * 50;
+        const a = file.scaledImages.find((a) => a.width == widthForImageRnd);
         if (a) {
           if (!a.useSame) {
-            fileBin = a.file;
+            fileBin = Buffer.from(a.file.buffer);
           }
         } else {
           const imageSharp = await sharp(fileBin, {});
           const meta = await imageSharp.metadata();
-          if (meta.width > widthForImage) {
+          if (meta.width > widthForImageRnd) {
             const resized = await imageSharp.resize({
-              width: widthForImage,
+              width: widthForImageRnd,
               withoutEnlargement: true,
               fit: 'contain',
             });
 
-            const buff = await resized.toBuffer();
+            const buff = await (await resized.webp()).toBuffer();
             fileBin = buff;
             file.scaledImages.push({
-              width: widthForImage,
+              width: widthForImageRnd,
               file: buff,
               useSame: false,
             });
           } else {
             file.scaledImages.push({
-              width: widthForImage,
+              width: widthForImageRnd,
               file: null,
               useSame: true,
             });
           }
+          // for fast response for phones
+          file.scaledImages = file.scaledImages.sort(
+            (a, b) => a.width - b.width,
+          );
         }
       }
       // file.
@@ -130,6 +134,7 @@ export class FileService {
       f.mimeType = ft.mimeType;
       f.length = ft.size;
       f.name = ft.name;
+      f.scaledImages = [];
       f.category = ft.category;
       this.setVotaility(f, ft.volatile, ft.durationMiliseconds);
       f = await f.save();
